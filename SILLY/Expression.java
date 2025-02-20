@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Class that represents an expression in the SILLY language.
@@ -7,8 +6,8 @@ import java.util.List;
  *   @version 1/20/25
  */
 public class Expression {
-    private Token tok;                        // used for simple expressions (no function)
-    private ArrayList<Expression> exprs;     // used to store function inputs
+    private Token tok;                         // used for simple expressions (no function)
+    private ArrayList<Expression> exprs;      // used to store function inputs
 
     /**
      * Creates an expression from the specified TokenStream.
@@ -64,76 +63,84 @@ public class Expression {
                 return new CharValue(this.tok.toString().charAt(1));
             }
         }
-        else if (this.tok.getType() == Token.Type.BOOL_FUNC) {
-            if (this.tok.toString().equals("not")) {
-                if (this.exprs.size() != 1) {
-                    throw new Exception("RUNTIME ERROR: 'not' expects one Boolean argument.");
-                }
-                DataValue val = this.exprs.get(0).evaluate();
-                if (val.getType() != DataValue.Type.BOOLEAN) {
-                    throw new Exception("RUNTIME ERROR: Boolean expected in 'not' expression.");
-                }
-                return new BooleanValue(!((Boolean) val.getValue()));
+        else if (this.tok.toString().equals("[")) {
+            ArrayList<DataValue> vals = new ArrayList<DataValue>();
+            for (Expression e : this.exprs) {
+                vals.add(e.evaluate());
             }
-            else if (this.tok.toString().equals("and")) {
-                boolean result = true;
-                for (Expression expr : this.exprs) {
-                    DataValue val = expr.evaluate();
-                    if (val.getType() != DataValue.Type.BOOLEAN) {
-                        throw new Exception("RUNTIME ERROR: Boolean expected in 'and' expression.");
-                    }
-                    result = result && (Boolean) val.getValue();
-                }
-                return new BooleanValue(result);
-            }
-            else if (this.tok.toString().equals("or")) {
-                boolean result = false;
-                for (Expression expr : this.exprs) {
-                    DataValue val = expr.evaluate();
-                    if (val.getType() != DataValue.Type.BOOLEAN) {
-                        throw new Exception("RUNTIME ERROR: Boolean expected in 'or' expression.");
-                    }
-                    result = result || (Boolean) val.getValue();
-                }
-                return new BooleanValue(result);
-            }
+            return new ListValue(vals);
         }
-        else if (this.tok.getType() == Token.Type.SEQ_FUNC) {
-            if (this.tok.toString().equals("len")) {
-                if (this.exprs.size() != 1) {
-                    throw new Exception("RUNTIME ERROR: 'len' expects one argument.");
+        else {
+            if (this.tok.getType() == Token.Type.MATH_FUNC) {
+                if (this.exprs.size() < 2) {
+                    throw new Exception("RUNTIME ERROR: Incorrect arity in math expression.");
                 }
-                DataValue val = this.exprs.get(0).evaluate();
-                if (val.getType() != DataValue.Type.LIST) {
-                    throw new Exception("RUNTIME ERROR: List expected in 'len' expression.");
+                DataValue first = this.exprs.get(0).evaluate();
+                if (!(first.getValue() instanceof Number)) {
+                    throw new Exception("RUNTIME ERROR: Non-numeric type in math expression.");
                 }
-                return new NumberValue(((List<DataValue>) val.getValue()).size());
+                double result = ((Number) first.getValue()).doubleValue();
+                for (int i = 1; i < this.exprs.size(); i++) {
+                    DataValue val = this.exprs.get(i).evaluate();
+                    if (!(val.getValue() instanceof Number)) {
+                        throw new Exception("RUNTIME ERROR: Non-numeric type in math expression.");
+                    }
+                    double num = ((Number) val.getValue()).doubleValue();
+                    switch (this.tok.toString()) {
+                        case "+":
+                            result += num;
+                            break;
+                        case "*":
+                            result *= num;
+                            break;
+                        case "/":
+                            if (num == 0) throw new Exception("RUNTIME ERROR: Division by zero.");
+                            result /= num;
+                            break;
+                    }
+                }
+                return new NumberValue(result);
+            }
+            if (this.tok.getType() == Token.Type.BOOL_FUNC) {
+                if (this.exprs.size() < 2) {
+                    throw new Exception("RUNTIME ERROR: Incorrect arity in comparison expression.");
+                }
+                DataValue first = this.exprs.get(0).evaluate();
+                for (int i = 1; i < this.exprs.size(); i++) {
+                    DataValue val = this.exprs.get(i).evaluate();
+                    if (first.getType() != val.getType()) {
+                        throw new Exception("RUNTIME ERROR: Type mismatch in comparison expression.");
+                    }
+                    Comparable<Object> firstComparable = (Comparable<Object>) first.getValue();
+                    Object secondValue = val.getValue();
+                    String operator = this.tok.toString();
+                    switch (operator) {
+                        case "==":
+                            if (!firstComparable.equals(secondValue)) return new BooleanValue(false);
+                            break;
+                        case "!=":
+                            if (firstComparable.equals(secondValue)) return new BooleanValue(false);
+                            break;
+                        case ">":
+                            if (firstComparable.compareTo(secondValue) <= 0) return new BooleanValue(false);
+                            break;
+                        case ">=":
+                            if (firstComparable.compareTo(secondValue) < 0) return new BooleanValue(false);
+                            break;
+                        case "<":
+                            if (firstComparable.compareTo(secondValue) >= 0) return new BooleanValue(false);
+                            break;
+                        case "<=":
+                            if (firstComparable.compareTo(secondValue) > 0) return new BooleanValue(false);
+                            break;
+                        default:
+                            throw new Exception("RUNTIME ERROR: Unknown comparison operator: " + operator);
+                    }
+                    first = val;
+                }
+                return new BooleanValue(true);
             }
         }
         throw new Exception("RUNTIME ERROR: Unknown expression format.");
-    }
-
-    /**
-     * Converts the current expression into a String.
-     *   @return the String representation of this expression
-     */
-    public String toString() {
-        if (this.exprs == null) {
-            return this.tok.toString();
-        }
-        else if (this.tok.toString().equals("[")) {
-            StringBuilder message = new StringBuilder("[");
-            for (Expression e: this.exprs) {
-                message.append(e).append(" ");
-            }
-            return message.toString().trim() + "]";
-        }
-        else {
-            StringBuilder message = new StringBuilder("(" + this.tok);
-            for (Expression e : this.exprs) {
-                message.append(" ").append(e);
-            }
-            return message.append(")").toString();
-        }
     }
 }
