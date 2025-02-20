@@ -48,6 +48,7 @@ public class Expression {
      * Evaluates the current expression.
      *   @return the value represented by the expression
      */
+    @SuppressWarnings("unchecked")
     public DataValue evaluate() throws Exception {
         if (this.exprs == null) {
             if (this.tok.getType() == Token.Type.IDENTIFIER) {
@@ -62,33 +63,41 @@ public class Expression {
             } else if (this.tok.getType() == Token.Type.CHAR_LITERAL) {
                 return new CharValue(this.tok.toString().charAt(1));
             }
-        }
+        } 
         else if (this.tok.toString().equals("[")) {
-            ArrayList<DataValue> vals = new ArrayList<DataValue>();
+            ArrayList<DataValue> vals = new ArrayList<>();
             for (Expression e : this.exprs) {
                 vals.add(e.evaluate());
             }
             return new ListValue(vals);
-        }
+        } 
         else {
             if (this.tok.getType() == Token.Type.MATH_FUNC) {
                 if (this.exprs.size() < 2) {
                     throw new Exception("RUNTIME ERROR: Incorrect arity in math expression.");
                 }
+
                 DataValue first = this.exprs.get(0).evaluate();
                 if (!(first.getValue() instanceof Number)) {
                     throw new Exception("RUNTIME ERROR: Non-numeric type in math expression.");
                 }
+
                 double result = ((Number) first.getValue()).doubleValue();
+
                 for (int i = 1; i < this.exprs.size(); i++) {
                     DataValue val = this.exprs.get(i).evaluate();
                     if (!(val.getValue() instanceof Number)) {
                         throw new Exception("RUNTIME ERROR: Non-numeric type in math expression.");
                     }
+
                     double num = ((Number) val.getValue()).doubleValue();
+
                     switch (this.tok.toString()) {
                         case "+":
                             result += num;
+                            break;
+                        case "-":
+                            result -= num;
                             break;
                         case "*":
                             result *= num;
@@ -97,50 +106,83 @@ public class Expression {
                             if (num == 0) throw new Exception("RUNTIME ERROR: Division by zero.");
                             result /= num;
                             break;
+                        default:
+                            throw new Exception("RUNTIME ERROR: Unknown mathematical operator.");
                     }
                 }
                 return new NumberValue(result);
-            }
-            if (this.tok.getType() == Token.Type.BOOL_FUNC) {
+            } 
+            else if (this.tok.getType() == Token.Type.BOOL_FUNC) {
                 if (this.exprs.size() < 2) {
                     throw new Exception("RUNTIME ERROR: Incorrect arity in comparison expression.");
                 }
+
                 DataValue first = this.exprs.get(0).evaluate();
+
                 for (int i = 1; i < this.exprs.size(); i++) {
                     DataValue val = this.exprs.get(i).evaluate();
+
                     if (first.getType() != val.getType()) {
                         throw new Exception("RUNTIME ERROR: Type mismatch in comparison expression.");
                     }
-                    Comparable<Object> firstComparable = (Comparable<Object>) first.getValue();
+
+                    Comparable<Object> firstValue = (Comparable<Object>) first.getValue();
                     Object secondValue = val.getValue();
-                    String operator = this.tok.toString();
-                    switch (operator) {
+
+                    switch (this.tok.toString()) {
                         case "==":
-                            if (!firstComparable.equals(secondValue)) return new BooleanValue(false);
+                            if (!firstValue.equals(secondValue)) return new BooleanValue(false);
                             break;
                         case "!=":
-                            if (firstComparable.equals(secondValue)) return new BooleanValue(false);
+                            if (firstValue.equals(secondValue)) return new BooleanValue(false);
                             break;
                         case ">":
-                            if (firstComparable.compareTo(secondValue) <= 0) return new BooleanValue(false);
+                            if (firstValue.compareTo(secondValue) <= 0) return new BooleanValue(false);
                             break;
                         case ">=":
-                            if (firstComparable.compareTo(secondValue) < 0) return new BooleanValue(false);
+                            if (firstValue.compareTo(secondValue) < 0) return new BooleanValue(false);
                             break;
                         case "<":
-                            if (firstComparable.compareTo(secondValue) >= 0) return new BooleanValue(false);
+                            if (firstValue.compareTo(secondValue) >= 0) return new BooleanValue(false);
                             break;
                         case "<=":
-                            if (firstComparable.compareTo(secondValue) > 0) return new BooleanValue(false);
+                            if (firstValue.compareTo(secondValue) > 0) return new BooleanValue(false);
                             break;
                         default:
-                            throw new Exception("RUNTIME ERROR: Unknown comparison operator: " + operator);
+                            throw new Exception("RUNTIME ERROR: Unknown comparison operator: " + this.tok.toString());
                     }
+
                     first = val;
                 }
                 return new BooleanValue(true);
             }
         }
         throw new Exception("RUNTIME ERROR: Unknown expression format.");
+    }
+
+
+
+    /**
+     * Converts the current expression into a String.
+     *   @return the String representation of this expression
+     */
+    public String toString() {
+        if (this.exprs == null) {
+            return this.tok.toString();
+        }
+        else if (this.tok.toString().equals("[")) {
+            StringBuilder message = new StringBuilder("[");
+            for (Expression e: this.exprs) {
+                message.append(e).append(" ");
+            }
+            return message.toString().trim() + "]";
+        }
+        else {
+            StringBuilder message = new StringBuilder("(" + this.tok);
+            for (Expression e : this.exprs) {
+                message.append(" ").append(e);
+            }
+            return message.append(")").toString();
+        }
     }
 }
