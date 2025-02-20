@@ -4,7 +4,7 @@
  *   @version 1/20/25
  */
 public interface DataValue extends Comparable<DataValue> {   
-    public static enum Type { NUMBER, BOOLEAN, LIST }
+    public static enum Type { NUMBER, BOOLEAN, LIST, CHAR }
     
     public Object getValue();
     public DataValue.Type getType();
