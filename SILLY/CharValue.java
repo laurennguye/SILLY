@@ -1,5 +1,7 @@
 /**
  * Class representing character values in SILLY.
+ * 
+ * @author Lauren Nguyen
  */
 public class CharValue implements DataValue {
     private char value;

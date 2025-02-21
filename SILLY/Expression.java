@@ -37,7 +37,8 @@ public class Expression {
 			}
 			input.next();
 		} else if (this.tok.getType() != Token.Type.IDENTIFIER && this.tok.getType() != Token.Type.NUM_LITERAL
-				&& this.tok.getType() != Token.Type.BOOL_LITERAL && this.tok.getType() != Token.Type.CHAR_LITERAL) {
+				&& this.tok.getType() != Token.Type.BOOL_LITERAL && this.tok.getType() != Token.Type.CHAR_LITERAL
+				&& this.tok.getType() != Token.Type.STR_LITERAL) {
 			throw new Exception("SYNTAX ERROR: Unknown value (" + this.tok + ").");
 		}
 	}
@@ -61,6 +62,8 @@ public class Expression {
 				return new BooleanValue(Boolean.valueOf(this.tok.toString()));
 			} else if (this.tok.getType() == Token.Type.CHAR_LITERAL) {
 				return new CharValue(this.tok.toString().charAt(1));
+			} else if (this.tok.getType() == Token.Type.STR_LITERAL) {
+				return new StringValue(this.tok.toString().substring(1, this.tok.toString().length() - 1));
 			}
 		} else if (this.tok.toString().equals("[")) {
 			ArrayList<DataValue> vals = new ArrayList<>();
@@ -195,20 +198,23 @@ public class Expression {
 					first = val;
 				}
 				return new BooleanValue(true);
-			} else if (this.tok.getType() == Token.Type.SEQ_FUNC) {
+			}
+			if (this.tok.getType() == Token.Type.SEQ_FUNC) {
 				if (this.exprs.isEmpty()) {
 					throw new Exception("RUNTIME ERROR: Sequence function requires at least one argument.");
 				}
 				DataValue first = this.exprs.get(0).evaluate();
+
 				switch (this.tok.toString()) {
 				case "len":
 					if (!(first instanceof ListValue)) {
-						throw new Exception("RUNTIME ERROR: 'len' function requires a list argument.");
+						throw new Exception("RUNTIME ERROR: 'len' function requires a list or string argument.");
 					}
-					return new NumberValue(((ArrayList<DataValue>) first.getValue()).size());
+					return new NumberValue(((ListValue) first).size());
+
 				case "get":
 					if (!(first instanceof ListValue)) {
-						throw new Exception("RUNTIME ERROR: 'get' function requires a list argument.");
+						throw new Exception("RUNTIME ERROR: 'get' function requires a list or string argument.");
 					}
 					if (this.exprs.size() != 2) {
 						throw new Exception("RUNTIME ERROR: 'get' function requires exactly two arguments.");
@@ -218,31 +224,38 @@ public class Expression {
 						throw new Exception("RUNTIME ERROR: 'get' function index must be a number.");
 					}
 					int index = ((Number) indexVal.getValue()).intValue();
-					ArrayList<DataValue> list = (ArrayList<DataValue>) first.getValue();
-					if (index < 0 || index >= list.size()) {
+					if (index < 0 || index >= ((ListValue) first).size()) {
 						throw new Exception("RUNTIME ERROR: List index out of bounds.");
 					}
-					return list.get(index);
+					return ((ListValue) first).get(index);
+
 				case "cat":
-					if (!(first instanceof ListValue)) {
-						throw new Exception("RUNTIME ERROR: 'cat' function requires list arguments.");
-					}
-					ArrayList<DataValue> concatenated = new ArrayList<>((ArrayList<DataValue>) first.getValue());
-					for (int i = 1; i < this.exprs.size(); i++) {
-						DataValue nextList = this.exprs.get(i).evaluate();
-						if (!(nextList instanceof ListValue)) {
-							throw new Exception("RUNTIME ERROR: 'cat' function requires all arguments to be lists.");
+					boolean allStrings = true;
+					StringBuilder strConcat = new StringBuilder();
+					ArrayList<DataValue> concatenated = new ArrayList<>();
+
+					for (Expression expr : this.exprs) {
+						DataValue val = expr.evaluate();
+
+						if (val instanceof StringValue) {
+							strConcat.append(val.toString());
+						} else if (val instanceof ListValue) {
+							concatenated.addAll(((ListValue) val).getList());
+							allStrings = false;
+						} else {
+							throw new Exception(
+									"RUNTIME ERROR: 'cat' function requires all arguments to be lists or strings.");
 						}
-						concatenated.addAll((ArrayList<DataValue>) nextList.getValue());
+					}
+
+					if (allStrings) {
+						return new StringValue(strConcat.toString());
 					}
 					return new ListValue(concatenated);
+
 				case "str":
-					ArrayList<DataValue> charList = new ArrayList<>();
-					String strValue = first.toString();
-					for (char c : strValue.toCharArray()) {
-						charList.add(new CharValue(c));
-					}
-					return new ListValue(charList);
+					return new StringValue(first.toString());
+
 				default:
 					throw new Exception("RUNTIME ERROR: Unknown sequence function '" + this.tok.toString() + "'.");
 				}
