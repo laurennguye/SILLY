@@ -17,7 +17,7 @@ public class CharValue implements DataValue {
     }
 
     public String toString() {
-        return "'" + this.value + "'";
+        return Character.toString(value);
     }
 
     public int compareTo(DataValue other) {
