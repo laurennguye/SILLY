@@ -259,8 +259,28 @@ public class Expression {
 				default:
 					throw new Exception("RUNTIME ERROR: Unknown sequence function '" + this.tok.toString() + "'.");
 				}
-			}
-		}
+			} else if (this.tok.getType() == Token.Type.IDENTIFIER) {
+                /////// ADDED: FUNCTION CALL HANDLING ///////
+                FunctionDecl func = Interpreter.MEMORY.lookupFunction(this.tok);
+                if (func == null) {
+                    throw new Exception("RUNTIME ERROR: Function '" + this.tok + "' not declared");
+                }
+                // Stage 1: Ensure no parameters
+                if (this.exprs.size() != func.getParams().size()) {
+                    throw new Exception("RUNTIME ERROR: Function '" + this.tok + "' expects 0 parameters");
+                }
+                // Create new scope for the function
+                Interpreter.MEMORY.beginNestedScope();
+                try {
+                    func.getBody().execute(); // Execute the function body
+                } finally {
+                    Interpreter.MEMORY.endCurrentScope();
+                }
+                return new BooleanValue(true); // Default return value (Stage 1)
+            } else {
+                throw new Exception("RUNTIME ERROR: Unknown expression format.");
+            }
+        }
 		throw new Exception("RUNTIME ERROR: Unknown expression format.");
 	}
 
