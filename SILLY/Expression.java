@@ -63,7 +63,11 @@ public class Expression {
 			} else if (this.tok.getType() == Token.Type.CHAR_LITERAL) {
 				return new CharValue(this.tok.toString().charAt(1));
 			} else if (this.tok.getType() == Token.Type.STR_LITERAL) {
-				return new StringValue(this.tok.toString().substring(1, this.tok.toString().length() - 1));
+				String str = this.tok.toString();
+				if (str.length() == 2) {
+					return new StringValue("");
+				}
+				return new StringValue(str.substring(1, str.length() - 1));
 			}
 		} else if (this.tok.toString().equals("[")) {
 			ArrayList<DataValue> vals = new ArrayList<>();
@@ -236,8 +240,10 @@ public class Expression {
 
 					for (Expression expr : this.exprs) {
 						DataValue val = expr.evaluate();
+						if (val == null) {
+							throw new Exception("RUNTIME ERROR: 'cat' argument is null");
+						}
 
-						// Handle empty strings and StringValue
 						if (val instanceof StringValue) {
 							strConcat.append(val.toString());
 						} else if (val instanceof ListValue) {
@@ -258,23 +264,17 @@ public class Expression {
 				}
 			} else if (this.tok.getType() == Token.Type.IDENTIFIER) {
 				FunctionDecl func = Interpreter.MEMORY.lookupFunction(this.tok);
-				if (func == null) {
-					throw new Exception("RUNTIME ERROR: Function '" + this.tok + "' not declared");
-				}
-
-				if (this.exprs.size() != func.getParams().size()) {
-					throw new Exception("RUNTIME ERROR: Function '" + this.tok + "' expects " + func.getParams().size()
-							+ " parameters, got " + this.exprs.size());
-				}
-
 				Interpreter.MEMORY.beginNestedScope();
 				try {
+					ArrayList<DataValue> evaluatedArgs = new ArrayList<>();
+					for (Expression argExpr : this.exprs) {
+						evaluatedArgs.add(argExpr.evaluate());
+					}
+
 					for (int i = 0; i < func.getParams().size(); i++) {
 						Token param = func.getParams().get(i);
-						DataValue argValue = this.exprs.get(i).evaluate();
-
 						Interpreter.MEMORY.declareVariable(param);
-						Interpreter.MEMORY.storeValue(param, argValue);
+						Interpreter.MEMORY.storeValue(param, evaluatedArgs.get(i));
 					}
 
 					func.getBody().execute();

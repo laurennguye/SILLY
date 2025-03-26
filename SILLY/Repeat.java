@@ -17,8 +17,8 @@ public class Repeat extends Statement {
         if (!input.next().toString().equals("repeat")) {
             throw new Exception("SYNTAX ERROR: Malformed repeat statement");
         }
-        this.count = new Expression(input); // Parse the count expression
-        this.body = new Compound(input, false); // No nested scope for loop body
+        this.count = new Expression(input);
+        this.body = new Compound(input, false);
     }
 
     /**

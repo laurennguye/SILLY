@@ -59,15 +59,17 @@ public class MemorySpace {
 	 * @param val      the value to be stored under that name
 	 */
 	public void storeValue(Token variable, DataValue val) {
-	    if (this.isInNestedScope() && !this.runtimeStack.peek().declaredInScope(variable)) {
-	        this.declareVariable(variable);
-	    }
-	    
 	    ScopeRec scope = this.findScopeinStack(variable);
 	    if (scope != null) {
 	        scope.storeInScope(variable, val);
-	    } else {
-	        throw new RuntimeException("Variable '" + variable + "' not declared");
+	    }
+	    else {
+	        if (this.isInNestedScope()) {
+	            this.declareVariable(variable);
+	            this.runtimeStack.peek().storeInScope(variable, val);
+	        } else {
+	            throw new RuntimeException("Variable '" + variable + "' not declared");
+	        }
 	    }
 	}
 
@@ -80,8 +82,6 @@ public class MemorySpace {
 	public DataValue lookupValue(Token variable) {
 		return this.findScopeinStack(variable).lookupInScope(variable);
 	}
-
-	/////////////////////////////////////////////////////////////////////////////
 
 	/**
 	 * Locates the Scope in the stackSegment that contains the specified variable.

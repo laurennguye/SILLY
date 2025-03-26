@@ -35,16 +35,15 @@ print q
 print (+ (square 1) (square 2) (square 3))
 
 func test(n1 n2) {
-    if (== n1 n2) {
-        return n1
-    } else {
-        if (> n1 n2) {
-            return (+ n1 (* n2 -1))
+        if (== n1 n2) {
+            return n1
         } else {
-            return (+ n1 (+ n2 -1))
+            if (> n1 n2) {
+                return (+ n1 (* n2 -1))
+            }
+            else { } 
         }
     }
-}
 
 print (test 5 5)
 print (test 10 8)
@@ -61,18 +60,18 @@ func stamp(word times) {
 print (stamp (cat "foo" "d") (+ 2 1))
 
 func sumRange(low high) {
-    if (> low high) {
-        return (sumRange high low)
-    }
-    else {
-        if (== low high) {
-            return low
+        if (> low high) {
+            return (sumRange high low)
         }
         else {
-            return (+ low (sumRange (+ low 1) high))
+            if (== low high) {
+                return low
+            }
+            else {
+                return (+ low (sumRange (+ low 1) high))
+            }
         }
     }
-}
 
 print (sumRange 1 10)
 print (+ (sumRange 1 5) (sumRange 6 10))
