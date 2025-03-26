@@ -62,8 +62,7 @@ public class MemorySpace {
 	    ScopeRec scope = this.findScopeinStack(variable);
 	    if (scope != null) {
 	        scope.storeInScope(variable, val);
-	    }
-	    else {
+	    } else {
 	        if (this.isInNestedScope()) {
 	            this.declareVariable(variable);
 	            this.runtimeStack.peek().storeInScope(variable, val);
@@ -128,5 +127,9 @@ public class MemorySpace {
 	
     public boolean isInNestedScope() {
         return this.runtimeStack.size() > 1;
+    }
+    
+    public boolean isDeclaredInCurrentScope(Token variable) {
+        return this.runtimeStack.peek().declaredInScope(variable);
     }
 }

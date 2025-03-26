@@ -29,7 +29,12 @@ public class Assignment extends Statement {
      * Executes the current assignment statement.
      */
     public void execute() throws Exception {
-        if (!Interpreter.MEMORY.isDeclared(this.vbl)) {
+        if (Interpreter.MEMORY.isInNestedScope()) {
+            if (!Interpreter.MEMORY.isDeclaredInCurrentScope(this.vbl)) {
+                Interpreter.MEMORY.declareVariable(this.vbl);
+            }
+        } 
+        else if (!Interpreter.MEMORY.isDeclared(this.vbl)) {
             Interpreter.MEMORY.declareVariable(this.vbl);
         }
         
