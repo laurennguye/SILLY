@@ -237,21 +237,18 @@ public class Expression {
 					for (Expression expr : this.exprs) {
 						DataValue val = expr.evaluate();
 
+						// Handle empty strings and StringValue
 						if (val instanceof StringValue) {
 							strConcat.append(val.toString());
 						} else if (val instanceof ListValue) {
 							concatenated.addAll(((ListValue) val).getList());
 							allStrings = false;
 						} else {
-							throw new Exception(
-									"RUNTIME ERROR: 'cat' function requires all arguments to be lists or strings.");
+							throw new Exception("RUNTIME ERROR: 'cat' requires lists or strings");
 						}
 					}
 
-					if (allStrings) {
-						return new StringValue(strConcat.toString());
-					}
-					return new ListValue(concatenated);
+					return allStrings ? new StringValue(strConcat.toString()) : new ListValue(concatenated);
 
 				case "str":
 					return new StringValue(first.toString());
@@ -265,26 +262,22 @@ public class Expression {
 					throw new Exception("RUNTIME ERROR: Function '" + this.tok + "' not declared");
 				}
 
-				// Validate parameter count
 				if (this.exprs.size() != func.getParams().size()) {
 					throw new Exception("RUNTIME ERROR: Function '" + this.tok + "' expects " + func.getParams().size()
 							+ " parameters, got " + this.exprs.size());
 				}
 
-				// Create new scope for the function call
 				Interpreter.MEMORY.beginNestedScope();
 				try {
-					// Bind arguments to parameters
 					for (int i = 0; i < func.getParams().size(); i++) {
 						Token param = func.getParams().get(i);
 						DataValue argValue = this.exprs.get(i).evaluate();
+
+						Interpreter.MEMORY.declareVariable(param);
 						Interpreter.MEMORY.storeValue(param, argValue);
 					}
 
-					// Execute the function body
 					func.getBody().execute();
-
-					// Default return value if no return statement
 					return new BooleanValue(true);
 				} catch (Return.ReturnSignal ret) {
 					return ret.getValue();

@@ -1,0 +1,79 @@
+func foo() {
+    print "foo"
+}
+
+x = (foo)
+print x
+
+func many(word n) {
+    repeat n {
+        print word
+    }
+}
+
+x = (many "bar" 3)
+x = (many "abcd" (/ 16 4 2))
+
+func last(seq) {
+    return (get seq (+ (len seq) -1))
+}
+
+print (last "abcd")
+print (last [1 2 3 4])
+print (cat "last=" (str (last [1 2 3 4])))
+
+func square(p) {
+    q = (* p p)
+    return q
+}
+
+p = 3
+q = 4
+print (square 9)
+print p
+print q
+print (+ (square 1) (square 2) (square 3))
+
+func test(n1 n2) {
+    if (== n1 n2) {
+        return n1
+    } else {
+        if (> n1 n2) {
+            return (+ n1 (* n2 -1))
+        } else {
+            return (+ n1 (+ n2 -1))
+        }
+    }
+}
+
+print (test 5 5)
+print (test 10 8)
+print (test 10 18)
+
+func stamp(word times) {
+    final = ""
+    repeat times {
+        final = (cat final word)
+    }
+    return final
+}
+
+print (stamp (cat "foo" "d") (+ 2 1))
+
+func sumRange(low high) {
+    if (> low high) {
+        return (sumRange high low)
+    }
+    else {
+        if (== low high) {
+            return low
+        }
+        else {
+            return (+ low (sumRange (+ low 1) high))
+        }
+    }
+}
+
+print (sumRange 1 10)
+print (+ (sumRange 1 5) (sumRange 6 10))
+print (sumRange 10 1)

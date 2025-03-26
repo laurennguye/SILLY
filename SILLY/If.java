@@ -17,13 +17,13 @@ public class If extends Statement {
             throw new Exception("SYNTAX ERROR: Malformed if statement");
         }
         this.test = new Expression(input);
-        this.ifBody = new Compound(input);
+        this.ifBody = new Compound(input, true);
         
         if (!input.next().toString().equals("else")) {
         	throw new Exception("SYNTAX ERROR: Malformed if statement");
         }
         
-        this.elseBody = new Compound(input);
+        this.elseBody = new Compound(input, true);
     }
 
     /**

@@ -16,7 +16,7 @@ public class While extends Statement {
             throw new Exception("SYNTAX ERROR: Malformed while statement");
         }
         this.expr = new Expression(input);     
-        this.body = new Compound(input);
+        this.body = new Compound(input, true);
     }
 
     /**

@@ -6,7 +6,7 @@ import java.util.List;
  */
 public class FunctionDecl extends Statement {
 	private Token name;
-	private List<Token> params; // Parameters (empty for Stage 1)
+	private List<Token> params;
 	private Compound body;
 
 	/**
@@ -31,13 +31,11 @@ public class FunctionDecl extends Statement {
 	public static FunctionDecl parse(TokenStream input) throws Exception {
 		input.next(); // Consume "func"
 
-		// Parse function name
 		Token funcName = input.next();
 		if (funcName.getType() != Token.Type.IDENTIFIER) {
 			throw new Exception("SYNTAX ERROR: Invalid function name");
 		}
 
-		// Parse parameters
 		if (!input.next().toString().equals("(")) {
 			throw new Exception("SYNTAX ERROR: Missing '(' in function declaration");
 		}
@@ -50,10 +48,9 @@ public class FunctionDecl extends Statement {
 			}
 			params.add(param);
 		}
-		input.next(); // Consume ")"
+		input.next(); 
 
-		// Parse compound statement (body)
-		Compound body = new Compound(input);
+		Compound body = new Compound(input, true); 
 
 		return new FunctionDecl(funcName, params, body);
 	}
@@ -68,7 +65,6 @@ public class FunctionDecl extends Statement {
 		Interpreter.MEMORY.storeFunction(this.name, this);
 	}
 
-	//// Getters ////
 	public Token getName() {
 		return name;
 	}

@@ -14,8 +14,11 @@ public abstract class Statement {
      */
     public static Statement getStatement(TokenStream input) throws Exception {
         Token first = input.lookAhead(); 
-
-        if (first.toString().equals("func")) {
+        
+        if (first.toString().equals("return")) {
+            return new Return(input);
+        }
+        else if (first.toString().equals("func")) {
             return FunctionDecl.parse(input); 
         }
         else if (first.toString().equals("print")) {
@@ -28,7 +31,7 @@ public abstract class Statement {
             return new While(input);
         }       
         else if (first.toString().equals("{")) {
-            return new Compound(input);
+            return new Compound(input, true);
         }
         else if (first.toString().equals("repeat")) {
             return new Repeat(input);

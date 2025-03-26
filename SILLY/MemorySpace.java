@@ -59,7 +59,16 @@ public class MemorySpace {
 	 * @param val      the value to be stored under that name
 	 */
 	public void storeValue(Token variable, DataValue val) {
-		this.findScopeinStack(variable).storeInScope(variable, val);
+	    if (this.isInNestedScope() && !this.runtimeStack.peek().declaredInScope(variable)) {
+	        this.declareVariable(variable);
+	    }
+	    
+	    ScopeRec scope = this.findScopeinStack(variable);
+	    if (scope != null) {
+	        scope.storeInScope(variable, val);
+	    } else {
+	        throw new RuntimeException("Variable '" + variable + "' not declared");
+	    }
 	}
 
 	/**
@@ -116,4 +125,8 @@ public class MemorySpace {
 		}
 		return null;
 	}
+	
+    public boolean isInNestedScope() {
+        return this.runtimeStack.size() > 1;
+    }
 }
