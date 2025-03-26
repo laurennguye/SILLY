@@ -15,7 +15,10 @@ public abstract class Statement {
     public static Statement getStatement(TokenStream input) throws Exception {
         Token first = input.lookAhead(); 
 
-        if (first.toString().equals("print")) {
+        if (first.toString().equals("func")) {
+            return FunctionDecl.parse(input); 
+        }
+        else if (first.toString().equals("print")) {
             return new Print(input);
         }  
         else if (first.toString().equals("if")) {

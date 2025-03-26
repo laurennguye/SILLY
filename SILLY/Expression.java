@@ -260,27 +260,39 @@ public class Expression {
 					throw new Exception("RUNTIME ERROR: Unknown sequence function '" + this.tok.toString() + "'.");
 				}
 			} else if (this.tok.getType() == Token.Type.IDENTIFIER) {
-                /////// ADDED: FUNCTION CALL HANDLING ///////
-                FunctionDecl func = Interpreter.MEMORY.lookupFunction(this.tok);
-                if (func == null) {
-                    throw new Exception("RUNTIME ERROR: Function '" + this.tok + "' not declared");
-                }
-                // Stage 1: Ensure no parameters
-                if (this.exprs.size() != func.getParams().size()) {
-                    throw new Exception("RUNTIME ERROR: Function '" + this.tok + "' expects 0 parameters");
-                }
-                // Create new scope for the function
-                Interpreter.MEMORY.beginNestedScope();
-                try {
-                    func.getBody().execute(); // Execute the function body
-                } finally {
-                    Interpreter.MEMORY.endCurrentScope();
-                }
-                return new BooleanValue(true); // Default return value (Stage 1)
-            } else {
-                throw new Exception("RUNTIME ERROR: Unknown expression format.");
-            }
-        }
+				FunctionDecl func = Interpreter.MEMORY.lookupFunction(this.tok);
+				if (func == null) {
+					throw new Exception("RUNTIME ERROR: Function '" + this.tok + "' not declared");
+				}
+
+				// Validate parameter count
+				if (this.exprs.size() != func.getParams().size()) {
+					throw new Exception("RUNTIME ERROR: Function '" + this.tok + "' expects " + func.getParams().size()
+							+ " parameters, got " + this.exprs.size());
+				}
+
+				// Create new scope for the function call
+				Interpreter.MEMORY.beginNestedScope();
+				try {
+					// Bind arguments to parameters
+					for (int i = 0; i < func.getParams().size(); i++) {
+						Token param = func.getParams().get(i);
+						DataValue argValue = this.exprs.get(i).evaluate();
+						Interpreter.MEMORY.storeValue(param, argValue);
+					}
+
+					// Execute the function body
+					func.getBody().execute();
+
+					// Default return value if no return statement
+					return new BooleanValue(true);
+				} catch (Return.ReturnSignal ret) {
+					return ret.getValue();
+				} finally {
+					Interpreter.MEMORY.endCurrentScope();
+				}
+			}
+		}
 		throw new Exception("RUNTIME ERROR: Unknown expression format.");
 	}
 
